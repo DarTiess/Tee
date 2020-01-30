@@ -9,8 +9,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -18,8 +21,7 @@ import java.net.UnknownHostException;
 
 public class ClientActivity extends AppCompatActivity {
 TextView textReponse;
-EditText address;
-//textMes;
+EditText address, textMes;
 Button btnConnect, btnClear;
 
     @Override
@@ -29,7 +31,7 @@ Button btnConnect, btnClear;
         
         textReponse=(TextView)findViewById(R.id.reponse);
         address=(EditText)findViewById(R.id.address);
-      //  textMes=(EditText)findViewById(R.id.textMes);
+       textMes=(EditText)findViewById(R.id.sendMessage);
         btnClear=(Button)findViewById(R.id.clear);
         btnConnect=(Button)findViewById(R.id.connect);
         
@@ -37,9 +39,15 @@ Button btnConnect, btnClear;
     }
 
     public void onClickConnect(View view) {
+        String tMess=textMes.getText().toString();
+        if(tMess.equals("")){
+            tMess=null;
+            Toast.makeText(ClientActivity.this, "No message sent", Toast.LENGTH_SHORT).show();
+        }
+
         MyClientTask myClientTask=new MyClientTask(
                 address.getText().toString(),
-                8080);
+                8080, tMess);
                 myClientTask.execute();
         
         
@@ -58,21 +66,30 @@ Button btnConnect, btnClear;
         String adress;
         int port;
         String reponse;
-        String textMes;
+        String textMesToServer;
 
-        public MyClientTask(String addr, int prt) {
+        public MyClientTask(String addr, int prt, String tMess) {
             adress=addr;
             port=prt;
+            textMesToServer=tMess;
 
         }
 
         @Override
         protected Void doInBackground(Void... args) {
             Socket socket=null;
+            DataOutputStream dataOutputStream=null;
+            DataInputStream dataInputStream=null;
 
             try{
                 socket=new Socket(adress, port);
-                ByteArrayOutputStream byteArrayOutputStream=
+                dataOutputStream= new DataOutputStream(socket.getOutputStream());
+                dataInputStream=new DataInputStream(socket.getInputStream());
+                if(textMesToServer!=null){
+                    dataOutputStream.writeUTF(textMesToServer);
+                }
+                reponse=dataInputStream.readUTF();
+             /*   ByteArrayOutputStream byteArrayOutputStream=
                         new ByteArrayOutputStream(1024);
                 byte[] buffer=new byte[1024];
 
@@ -82,7 +99,7 @@ Button btnConnect, btnClear;
                 while ((bytesRead=inputStream.read(buffer))!=-1){
                     byteArrayOutputStream.write(buffer,0,bytesRead);
                     reponse+=byteArrayOutputStream.toString("UTF-8");
-                }
+                }*/
 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
@@ -95,6 +112,20 @@ Button btnConnect, btnClear;
                     try{
                         socket.close();
                     }catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+                if(dataOutputStream!=null){
+                    try{
+                        dataOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(dataInputStream!=null){
+                    try{
+                        dataInputStream.close();
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }

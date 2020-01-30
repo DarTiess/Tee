@@ -1,15 +1,22 @@
 package com.example.tee;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -33,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     int soundIdShot;
 
     int streamIDshot;
+    Intent serviceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,11 +54,13 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         infoip=(TextView)findViewById(R.id.infoip);
         msg=(TextView)findViewById(R.id.msg);
         soundIdShot=soundPool.load(this, R.raw.shot, 1);
-
+       serviceIntent=new Intent(this, MyService.class);
         infoip.setText(getIpAddress());
 
         Thread sockerServerThread=new Thread(new SocketServerThread());
         sockerServerThread.start();
+
+
     }
 
     private String getIpAddress() {
@@ -94,6 +104,11 @@ try{
         int count=0;
 
         public void run(){
+            Socket socket=null;
+            DataInputStream dataInputStream=null;
+            DataOutputStream dataOutputStream=null;
+
+
             try{
                 serverSocket=new ServerSocket(socketPORT);
 
@@ -102,31 +117,93 @@ try{
                     @Override
                     public void run() {
                         info.setText("I'm listninig.. "+serverSocket.getLocalPort());
+
                     }
                 });
 
                 while (true){
-                    Socket socket=serverSocket.accept();
+                   socket=serverSocket.accept();
+                    dataInputStream = new DataInputStream(socket.getInputStream());
+                    dataOutputStream=new DataOutputStream(socket.getOutputStream());
+                    String messageFromClient="";
+                    messageFromClient=dataInputStream.readUTF();
+
                     count++;
-                    message+="#"+count+" from "+socket.getInetAddress()+" : "+socket.getPort()+"\n";
+                    message+="#"+count+" from "+socket.getInetAddress()
+                            +" : "+socket.getPort()+"\n"
+                    +"\t\tMessage from client: "+messageFromClient+"\n\n";
+
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
 
                             msg.setText(message);
                             soundPool.play(soundIdShot,1,1,0,0,1);
+
                         }
                     });
 
-                    SocketServerReplyThread socketServerReplyThread=new SocketServerReplyThread(socket, count);
-                    socketServerReplyThread.run();
+                    String msgReplay="Hello, maybe some tea?...#"+count;
+                    dataOutputStream.writeUTF(msgReplay);
+
+              //    SocketServerReplyThread socketServerReplyThread=new SocketServerReplyThread(socket, count);
+               //    socketServerReplyThread.run();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+
+                final  String errMag=e.toString();
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        msg.setText(errMag);
+                    }
+                });
+
+            }finally {
+                if(socket!=null){
+                    try{
+                        socket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(dataInputStream!=null){
+                    try{
+                        dataInputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(dataOutputStream!=null){
+                    try{
+                        dataOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
         }
 
 
+    }
+
+    private void onNotif() {
+        Intent intent=new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent=PendingIntent.getActivity(this, 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Builder builder=
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle("Teeeeee")
+                        .setContentText("I want teeee")
+                        .setContentIntent(pendingIntent);
+
+        Notification notification=builder.build();
+
+        NotificationManager notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(1,notification);
     }
 
     private class SocketServerReplyThread extends Thread {
@@ -156,6 +233,7 @@ try{
                     public void run() {
                         msg.setText(message);
 
+
                     }
                 });
             } catch (IOException e) {
@@ -167,6 +245,7 @@ try{
                 @Override
                 public void run() {
                     msg.setText(message);
+
                 }
             });
 

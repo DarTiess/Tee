@@ -22,19 +22,29 @@
         android:layout_height="wrap_content"
         android:id="@+id/address"
         android:hint="Введи адресс"/>
+<EditText
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/sendMessage"
+    android:hint="Сообщение"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/connect"
+            android:text="Отправить запрос"
+            android:onClick="onClickConnect"/>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/clear"
+            android:text="Остановить "
+            android:onClick="onClickClear"/>
+    </LinearLayout>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/connect"
-        android:text="Отправить запрос"
-        android:onClick="onClickConnect"/>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/clear"
-        android:text="Остановить "
-        android:onClick="onClickClear"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
