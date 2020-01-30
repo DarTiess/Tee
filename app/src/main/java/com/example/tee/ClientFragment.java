@@ -1,65 +1,64 @@
 package com.example.tee;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class ClientActivity extends AppCompatActivity implements DialogFragment.OnFragmentInteractionListener {
-TextView textReponse;
-EditText address, textMes;
-Button btnConnect, btnClear;
+public class ClientFragment extends Fragment {
+    TextView textReponse;
+    EditText address, textMes;
+    Button btnConnect, btnClear;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_client);
-        
-        textReponse=(TextView)findViewById(R.id.reponse);
-        address=(EditText)findViewById(R.id.address);
-       textMes=(EditText)findViewById(R.id.sendMessage);
-        btnClear=(Button)findViewById(R.id.clear);
-        btnConnect=(Button)findViewById(R.id.connect);
-        
-        
-    }
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_client, container, false);
 
-    public void onClickConnect(View view) {
-        String tMess=textMes.getText().toString();
-        if(tMess.equals("")){
-            tMess=null;
-            Toast.makeText(ClientActivity.this, "No message sent", Toast.LENGTH_SHORT).show();
-        }
+        textReponse=(TextView)view.findViewById(R.id.reponse);
+        address=(EditText)view.findViewById(R.id.address);
+        textMes=(EditText)view.findViewById(R.id.sendMessage);
+        btnClear=(Button)view.findViewById(R.id.clear);
+        btnConnect=(Button)view.findViewById(R.id.connect);
 
-        MyClientTask myClientTask=new MyClientTask(
-                address.getText().toString(),
-                8080, tMess);
+        btnClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                textReponse.setText("");
+            }
+        });
+        btnConnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String tMess=textMes.getText().toString();
+
+                ClientFragment.MyClientTask myClientTask=new ClientFragment.MyClientTask(
+                        address.getText().toString(),
+                        8080, tMess);
                 myClientTask.execute();
-        
-        
+            }
+        });
+
+        return view;
     }
 
-    public void onClickClear(View view) {
-        textReponse.setText("");
-    }
-
-    public void clickToServer(View view) {
-        Intent intent=new Intent(this, MainActivity.class);
-        startActivity(intent);
+    public interface OnFragmentInteractionListener {
     }
 
     private class MyClientTask extends AsyncTask<Void, Void, Void> {

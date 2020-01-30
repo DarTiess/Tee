@@ -99,6 +99,11 @@ try{
 
     }
 
+    public void clickToChat(View view) {
+        Intent intent=new Intent(this, DialogActivity.class);
+        startActivity(intent);
+    }
+
     private class SocketServerThread extends Thread {
         static final int socketPORT=8080;
         int count=0;
